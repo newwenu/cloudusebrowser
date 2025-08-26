@@ -1,0 +1,40 @@
+name = "cloudflare-browser"
+main = "cloudflare-browser.js"
+compatibility_date = "2023-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "production"
+DEFAULT_HOMEPAGE = "https://www.baidu.com"
+ALLOWED_ORIGINS = "*"
+
+# 开发环境配置
+[env.development]
+name = "cloudflare-browser-dev"
+vars = { ENVIRONMENT = "development", DEBUG = "true" }
+
+# 预发布环境
+[env.staging]
+name = "cloudflare-browser-staging"
+vars = { ENVIRONMENT = "staging", DEBUG = "false" }
+
+# 生产环境
+[env.production]
+name = "cloudflare-browser"
+vars = { ENVIRONMENT = "production", DEBUG = "false" }
+
+# 自定义域名配置（取消注释并修改为您的域名）
+# [[env.production.routes]]
+# pattern = "browser.yourdomain.com/*"
+# custom_domain = true
+
+# 备用域名配置
+# [[env.production.routes]]
+# pattern = "www.browser.yourdomain.com/*"
+# custom_domain = true
+
+# KV命名空间（用于存储书签和设置）
+# [[kv_namespaces]]
+# binding = "BROWSER_DATA"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
