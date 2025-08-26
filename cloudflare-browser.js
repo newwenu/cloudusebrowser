@@ -824,16 +824,3 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('💡 提示: 输入网址开始浏览，使用快捷键提高效率');
 });`
 }
-
-function getFavicon(url) {
-  try {
-    const urlObj = new URL(url);
-    return 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
-  } catch (e) {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjNjY3ZWVhIi8+Cjx0ZXh0IHg9IjgiIHk9IjgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9IjAuMyI+XDwvL3RleHQ+Cjwvc3ZnPgo=';
-  }
-}
-
-function getFavicon() {
-  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjNjY3ZWVhIi8+Cjx0ZXh0IHg9IjE2IiB5PSIxNiIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9IjAuMyI+QzwvdGV4dD4KPC9zdmc+Cg==';
-}
