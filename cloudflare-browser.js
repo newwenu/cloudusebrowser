@@ -736,7 +736,7 @@ function getJS() {
                     links.forEach(link => {
                         // 保存原始的点击事件处理器
                         const originalOnClick = link.onclick;
-                        
+                        console.log("[链接点击]点击链接", link.href);
                         link.onclick = (e) => {
                             // 如果已经有阻止默认行为的处理器，先执行它
                             if (originalOnClick && originalOnClick.call(link, e) === false) {
