@@ -55,7 +55,10 @@ async function handleProxyRequest(request) {
   const url = new URL(request.url)
   const targetUrl = decodeURIComponent(url.pathname.replace('/proxy/', ''))
   
+  logger.log('处理代理请求，目标URL:', targetUrl);
+  
   if (!targetUrl.startsWith('http')) {
+    logger.error('无效的URL格式:', targetUrl);
     return new Response('Invalid URL', { status: 400 })
   }
   
@@ -63,20 +66,29 @@ async function handleProxyRequest(request) {
     const proxyResponse = await fetch(targetUrl, {
       method: request.method,
       headers: {
-        'User-Agent': 'clouduser-Browser/1.0',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
         'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1'
-      },
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0'
+    },
       redirect: 'follow'
     })
+    
+    logger.log('代理请求成功，状态码:', proxyResponse.status);
     
     const contentType = proxyResponse.headers.get('content-type') || ''
     
     if (contentType.includes('text/html')) {
       let html = await proxyResponse.text()
+      
+      logger.log('处理HTML内容，内容类型:', contentType);
       
       // 修改HTML中的链接，使其通过代理访问
       html = html.replace(/href="(http[s]?:\/\/[^"]+)"/g, (match, url) => {
@@ -90,6 +102,21 @@ async function handleProxyRequest(request) {
       html = html.replace(/action="(http[s]?:\/\/[^"]+)"/g, (match, url) => {
         return `action="/proxy/${encodeURIComponent(url)}"`
       })
+
+      // 添加对onclick事件中链接的处理
+      html = html.replace(/onclick="([^"]*window\.location\.href\s*=\s*['"])(https?:\/\/[^'"]+)(['"][^"]*)"/gi, (match, prefix, url, suffix) => {
+        return `onclick="${prefix}/proxy/${encodeURIComponent(url)}${suffix}"`
+      })
+
+      // 处理JavaScript中的window.open调用
+      html = html.replace(/window\.open\(['"](https?:\/\/[^'"]+)['"]/gi, (match, url) => {
+        return `window.open('/proxy/${encodeURIComponent(url)}')`
+      })
+
+      // 处理JavaScript中的location.href赋值
+      html = html.replace(/location\.href\s*=\s*['"](https?:\/\/[^'"]+)['"]/gi, (match, url) => {
+        return `location.href='/proxy/${encodeURIComponent(url)}'`
+      })
       
       return new Response(html, {
         status: proxyResponse.status,
@@ -101,6 +128,7 @@ async function handleProxyRequest(request) {
       })
     } else {
       // 非HTML内容直接返回
+      logger.log('返回非HTML内容，内容类型:', contentType);
       return new Response(proxyResponse.body, {
         status: proxyResponse.status,
         statusText: proxyResponse.statusText,
@@ -111,6 +139,7 @@ async function handleProxyRequest(request) {
       })
     }
   } catch (error) {
+    logger.error('代理请求失败:', error.message);
     return new Response(`代理错误: ${error.message}`, { 
       status: 500,
       headers: { 'Content-Type': 'text/plain;charset=UTF-8' }
@@ -307,7 +336,7 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: transform 0.3s;
+    // transition: transform 0.3s;
 }
 
 .nav-btn:hover {
@@ -693,6 +722,44 @@ function getJS() {
                 }
             });
         });
+    
+
+        // 添加对iframe内链接点击事件的处理
+        const browserFrame = document.getElementById('browserFrame');
+        if (browserFrame) {
+            browserFrame.addEventListener('load', () => {
+                try {
+                    const iframeDoc = browserFrame.contentDocument || browserFrame.contentWindow.document;
+                    
+                    // 处理所有<a>标签的点击事件
+                    const links = iframeDoc.querySelectorAll('a[href]');
+                    links.forEach(link => {
+                        // 保存原始的点击事件处理器
+                        const originalOnClick = link.onclick;
+                        
+                        link.onclick = (e) => {
+                            // 如果已经有阻止默认行为的处理器，先执行它
+                            if (originalOnClick && originalOnClick.call(link, e) === false) {
+                                return false;
+                            }
+                            
+                            const href = link.getAttribute('href');
+                            if (href) {
+                                // 检查是否是外部链接
+                                if (href.startsWith('http://') || href.startsWith('https://')) {
+                                    e.preventDefault();
+                                    this.navigate(href);
+                                    return false;
+                                }
+                                // 对于相对链接和其他协议，让浏览器处理
+                            }
+                        };
+                    });
+                } catch (error) {
+                    console.error('无法访问iframe内容:', error);
+                }
+            });
+        }
     }
 
     showWelcome() {
@@ -739,7 +806,7 @@ function getJS() {
     }
 
     normalizeUrl(url) {
-        if (!url.match(/^https?:\\/\\/\\//)) {
+        if (!url.match(/^https?:\\/\\//)) {
             url = 'https://' + url;
         }
         return url;
