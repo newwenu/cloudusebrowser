@@ -126,3 +126,37 @@ cloudflare-browser/
 
 - Cloudflare Workers文档：<https://developers.cloudflare.com/workers/>
 - Wrangler CLI文档：<https://developers.cloudflare.com/workers/wrangler/>
+
+## Pull Request 说明
+
+我们欢迎社区贡献！如果您希望为项目贡献代码，请遵循以下步骤：
+
+### 提交 Pull Request
+
+1. Fork 本项目到您的 GitHub 账户
+2. 创建一个新的分支进行开发
+3. 提交您的更改并推送分支到您的 Fork
+4. 在原项目中创建 Pull Request
+
+### 代码贡献指南
+
+- 请确保您的代码符合项目的编码规范
+- 提供清晰的提交信息，说明您的更改内容
+- 测试您的更改，确保不会引入新的问题
+
+### 问题反馈
+
+如果您在使用过程中遇到问题或有建议，请通过 `[Issues]` 反馈。(不一定能得到回复)
+
+## 贡献者
+
+## 致谢
+
+- 感谢 Cloudflare 提供的强大平台
+- 感谢所有贡献者的努力
+
+## 联系我们
+
+## 项目状态
+
+- 开发中
