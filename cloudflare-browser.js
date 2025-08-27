@@ -1,8 +1,26 @@
-// Cloudflare Workers 浏览器代理服务
-// 部署到 Cloudflare Workers 的浏览器功能
+// clouduser Workers 浏览器代理服务
+// 部署到 clouduser Workers 的浏览器功能
 
+// 添加Workers日志包装器
+const logger = {
+  log: (...args) => {
+    console.log('[WORKERS]', new Date().toISOString(), ...args);
+  },
+  error: (...args) => {
+    console.error('[WORKERS ERROR]', new Date().toISOString(), ...args);
+  },
+  info: (...args) => {
+    console.info('[WORKERS INFO]', new Date().toISOString(), ...args);
+  }
+};
+
+
+// addEventListener('fetch', event => {
+//   event.respondWith(handleRequest(event.request))
+// });
 addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
+  logger.log('收到请求:', event.request.url);
+  event.respondWith(handleRequest(event.request));
 })
 
 async function handleRequest(request) {
@@ -45,7 +63,7 @@ async function handleProxyRequest(request) {
     const proxyResponse = await fetch(targetUrl, {
       method: request.method,
       headers: {
-        'User-Agent': 'Cloudflare-Browser/1.0',
+        'User-Agent': 'clouduser-Browser/1.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
@@ -163,32 +181,33 @@ function getBrowserHTML() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloudflare 浏览器</title>
+    <title>clouduser 浏览器</title>
     <style>${getCSS()}</style>
     <link rel="icon" href="/static/favicon.ico">
 </head>
 <body>
     <div class="browser-container">
         <header class="header">
-            <h1>Cloudflare 浏览器</h1>
+            <h1>clouduser 浏览器</h1>
             <div class="toolbar">
-                <button class="nav-btn back-btn" title="后退">←</button>
-                <button class="nav-btn forward-btn" title="前进">→</button>
-                <button class="nav-btn refresh-btn" title="刷新">↻</button>
-                <button class="nav-btn home-btn" title="主页">🏠</button>
+                <button class="nav-btn back-btn" id="backBtn" title="后退">←</button>
+                <button class="nav-btn forward-btn" id="forwardBtn" title="前进">→</button>
+                <button class="nav-btn refresh-btn" id="refreshBtn" title="刷新">↻</button>
+                <button class="nav-btn home-btn" id="homeBtn" title="主页">🏠</button>
                 <div class="url-container">
                     <input type="text" id="urlBar" placeholder="输入网址..." />
-                    <button class="go-btn">前往</button>
+                    <button class="go-btn" id="goBtn">前往</button>
+
                 </div>
-                <button class="nav-btn settings-btn" title="设置">⚙️</button>
+                <button class="nav-btn settings-btn" id="settingsBtn" title="设置">⚙️</button>
             </div>
         </header>
         
         <main class="main-content">
             <div id="welcomeScreen" class="welcome-screen">
                 <div class="welcome-content">
-                    <h2>欢迎使用 Cloudflare 浏览器</h2>
-                    <p>基于 Cloudflare Workers 的轻量级浏览器</p>
+                    <h2>欢迎使用 clouduser 浏览器</h2>
+                    <p>基于 clouduser Workers 的轻量级浏览器</p>
                     <div class="quick-links">
                         <button class="quick-link-btn" data-url="https://www.baidu.com">百度</button>
                         <button class="quick-link-btn" data-url="https://www.google.com">Google</button>
@@ -288,7 +307,7 @@ body {
     border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s;
+    transition: transform 0.3s;
 }
 
 .nav-btn:hover {
@@ -545,7 +564,7 @@ body.dark-mode .quick-links button:hover {
 }
 
 function getJS() {
-  return `class CloudflareBrowser {
+  return `class ClouduserBrowser {
     constructor() {
         this.currentUrl = '';
         this.history = [];
@@ -592,40 +611,83 @@ function getJS() {
 
     bindEvents() {
         const urlBar = document.getElementById('urlBar');
-        const goBtn = document.querySelector('.go-btn');
-        const backBtn = document.querySelector('.back-btn');
-        const forwardBtn = document.querySelector('.forward-btn');
-        const refreshBtn = document.querySelector('.refresh-btn');
-        const settingsBtn = document.querySelector('.settings-btn');
-        const homeBtn = document.querySelector('.home-btn');
+        const goBtn = document.getElementById('goBtn');
+        const backBtn = document.getElementById('backBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const homeBtn = document.getElementById('homeBtn');
         const closeSettings = document.getElementById('closeSettings');
         const darkModeToggle = document.getElementById('darkMode');
         const mobileModeToggle = document.getElementById('mobileMode');
 
+        console.log('开始绑定事件监听器...');
+        console.log('找到的元素:', { urlBar, goBtn, backBtn, forwardBtn, refreshBtn, settingsBtn, homeBtn });
+
         if (urlBar) {
             urlBar.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.navigate(urlBar.value);
+                console.log('URL栏按键:', e.key);
+                if (e.key === 'Enter') {
+                    console.log('按下Enter键，导航到:', urlBar.value);
+                    this.navigate(urlBar.value);
+                }
             });
+        } else {
+            console.error('未找到URL栏元素');
         }
 
-        if (goBtn) goBtn.addEventListener('click', () => {
-            const urlBar = document.getElementById('urlBar');
-            if (urlBar) this.navigate(urlBar.value);
+        if (goBtn) {
+            goBtn.addEventListener('click', () => {
+                const urlBar = document.getElementById('urlBar');
+                console.log("点击前往按钮，URL:", urlBar ? urlBar.value : '未找到URL栏');
+                if (urlBar && urlBar.value.trim()) {
+                    this.navigate(urlBar.value);
+                }
+            });
+        } else {
+            console.error('未找到前往按钮');
+        }
+
+        if (backBtn) backBtn.addEventListener('click', () => {
+            console.log('点击后退按钮');
+            this.goBack();
         });
-        if (backBtn) backBtn.addEventListener('click', () => this.goBack());
-        if (forwardBtn) forwardBtn.addEventListener('click', () => this.goForward());
-        if (refreshBtn) refreshBtn.addEventListener('click', () => this.refresh());
-        if (settingsBtn) settingsBtn.addEventListener('click', () => this.toggleSettings());
-        if (homeBtn) homeBtn.addEventListener('click', () => this.showWelcome());
-        if (closeSettings) closeSettings.addEventListener('click', () => this.toggleSettings());
-        if (darkModeToggle) darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
-        if (mobileModeToggle) mobileModeToggle.addEventListener('change', () => this.toggleMobileMode());
+        if (forwardBtn) forwardBtn.addEventListener('click', () => {
+            console.log('点击前进按钮');
+            this.goForward();
+        });
+        if (refreshBtn) refreshBtn.addEventListener('click', () => {
+            console.log('点击刷新按钮');
+            this.refresh();
+        });
+        if (settingsBtn) settingsBtn.addEventListener('click', () => {
+            console.log('点击设置按钮');
+            this.toggleSettings();
+        });
+        if (homeBtn) homeBtn.addEventListener('click', () => {
+            console.log('点击主页按钮');
+            this.showWelcome();
+        });
+        if (closeSettings) closeSettings.addEventListener('click', () => {
+            console.log('点击关闭设置');
+            this.toggleSettings();
+        });
+        if (darkModeToggle) darkModeToggle.addEventListener('change', () => {
+            console.log('切换深色模式');
+            this.toggleDarkMode();
+        });
+        if (mobileModeToggle) mobileModeToggle.addEventListener('change', () => {
+            console.log('切换移动模式');
+            this.toggleMobileMode();
+        });
 
         // 绑定欢迎页面快速链接按钮
         const quickLinkBtns = document.querySelectorAll('.quick-link-btn');
+        console.log('找到的快速链接按钮数量:', quickLinkBtns.length);
         quickLinkBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const url = e.target.getAttribute('data-url');
+                console.log('点击快速链接:', url);
                 if (url) {
                     this.navigate(url);
                 }
@@ -677,7 +739,7 @@ function getJS() {
     }
 
     normalizeUrl(url) {
-        if (!url.match(/^https?:\/\//)) {
+        if (!url.match(/^https?:\\/\\/\\//)) {
             url = 'https://' + url;
         }
         return url;
@@ -812,15 +874,33 @@ function handleWelcomeClick(url) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.browser = new CloudflareBrowser();
+    console.log('DOM加载完成，初始化浏览器...');
+    window.browser = new ClouduserBrowser();
     
-    const frame = document.getElementById('browserFrame');
-    if (frame) {
-        frame.addEventListener('load', () => window.browser.handleFrameLoad());
-        frame.addEventListener('error', () => window.browser.handleFrameError());
-    }
+    // 延迟绑定iframe事件，确保iframe已加载
+    setTimeout(() => {
+        const frame = document.getElementById('browserFrame');
+        if (frame) {
+            console.log('找到iframe元素，绑定加载事件');
+            frame.addEventListener('load', () => {
+                console.log('iframe加载完成');
+                window.browser.handleFrameLoad();
+            });
+            frame.addEventListener('error', () => {
+                console.error('iframe加载错误');
+                window.browser.handleFrameError();
+            });
+        } else {
+            console.error('未找到iframe元素');
+        }
+    }, 100);
     
     console.log('🌐 Cloudflare Browser 已启动');
     console.log('💡 提示: 输入网址开始浏览，使用快捷键提高效率');
-});`
+});
+
+`;
 }
+function getFavicon() {
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjNjY3ZWVhIi8+Cjx0ZXh0IHg9IjgiIHk9IjgiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9IjAuMyI+XDwvL3RleHQ+Cjwvc3ZnPgo=';
+};
