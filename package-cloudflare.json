@@ -16,8 +16,8 @@
     "proxy"
   ],
   "author": "开发者",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "wrangler": "4.32.0 or later"
   }
 }

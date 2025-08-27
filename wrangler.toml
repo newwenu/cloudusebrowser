@@ -1,6 +1,6 @@
 name = "cloudflare-browser"
 main = "cloudflare-browser.js"
-compatibility_date = "2023-12-01"
+compatibility_date = ""
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
